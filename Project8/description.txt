@@ -1,0 +1,73 @@
+Description
+The purpose of this project is to do graph partition program using Pregel on Spark GraphX.
+
+This project must be done individually. No copying is permitted. Note: We will use a system for detecting software plagiarism, called MossLinks to an external site., which is an automatic system for determining the similarity of programs. That is, your program will be compared with the programs of the other students in class as well as with the programs submitted in previous years. This program will find similarities even if you rename variables, move code, change code structure, etc.
+
+Note that, if you use a Search Engine to find similar programs on the web, we will find these programs too. So don't do it because you will get caught and you will get an F in the course (this is cheating). Don't look for code to use for your project on the web or from other students (current or past). Don't use ChatGPT or any other AI program to generate code. Just do your project alone using the help given in this project description and from your instructor and GTA only.
+
+Platform
+As in the previous projects, you will develop your program on SDSC Expanse. Optionally, you may use your laptop to help you develop your program, but you should test your programs on Expanse before you submit them.
+
+Using your laptop to develop your project
+If you'd prefer, you may use your laptop to develop your program and then you would need to test it and run it on Expanse.
+
+To install the project:
+
+cd
+wget http://lambda.uta.edu/cse6332/project8.tgz
+tar xfz project8.tgz
+To compile and run project8:
+
+cd project8
+mvn install
+~/spark-3.1.2-bin-hadoop3.2/bin/spark-submit --class Partition --master local[2] target/*.jar small-graph.txt
+Your result should be the same as the small-solution.txt.
+
+Actually, if your laptop has enough memory, you can run your program on large-graph.txt too. In that case, your result should be the same as the large-solution.txt.
+
+Setting up your Project on Expanse
+This step is required. If you'd like, you can develop this project completely on Expanse. If you have already developed project 8 on your laptop, copy project8.tgz from your laptop to Expanse. Otherwise, download project8 using wget http://lambda.uta.edu/cse6332/project8.tgz.
+
+Then untar project8:
+
+tar xfz project8.tgz
+chmod -R g-wrx,o-wrx project8
+You can compile your project using:
+
+run partition.build
+and you can run it in local mode over the small graph using:
+
+sbatch partition.local.run
+Your result should be the same as the small-solution.txt. You should modify and run your programs in local mode until you get the correct result. After you make sure that your program runs correctly in local mode, you run it in distributed mode using:
+
+sbatch partition.distr.run
+This will work on the moderate-sized graph and will print the results to the output. It should be the same as large-solution.txt.
+
+Project Description
+You are asked to re-implement Project #5 (Graph Processing) using Pregel on Spark GraphX. That is, your program will partition your graph into 10 clusters. An incomplete file project8/src/main/scala/Partition.scala is provided, as well as scripts to build and run this code on Expanse. You should modify Partition.scala only. You should use the pregel method from the GraphX Pregel APILinks to an external site. only to write your code. Your main program should take the text file that contains the graph (small-graph.txt or large-graph.txt) as an argument and print the results to the output. The stopping condition is when the number of repetition reaches 6.
+
+Use the following pseudo-code to do graph partitioning using Pregel (some of this code is given in Partition.scala):
+
+Read the input graph G and construct the RDD of edges and vertices
+Construct the graph from the RDDs of vertices and edges
+Call the Graph.pregel method in the GraphX Pregel API to calculate the new cluster number for each vertex and propagate this number to the neighbors. For each vertex, this method changes its cluster number to the max cluster number of its neighbors only if the current cluster number is -1
+Group the graph vertices by their cluster number and print the partition sizes. The result must be sorted by the cluster number. Use RDD methods.
+Look at the example example/src/main/scala/SSSPExample.scala which implements the single source shortest path. You can compile and run it on your laptop using:
+
+cd example
+mvn install
+~/spark-3.1.2-bin-hadoop3.2/bin/spark-submit --class SSSPExample --master local[2] target/*.jar
+Documentation
+You can learn more about GraphX at:
+
+GraphX Programming GuideLinks to an external site.
+GraphX PregelLinks to an external site.
+Graph APILinks to an external site.
+GraphOps APILinks to an external site.
+EdgeTriplet APILinks to an external site.
+What to Submit
+Zip and submit your project8 directory, which must contain the following files:
+
+project8/src/main/scala/Partition.scala
+project8/partition.local.out
+project8/partition.distr.out

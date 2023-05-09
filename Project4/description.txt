@@ -1,0 +1,122 @@
+Description
+The purpose of this project is to develop a data analysis program using Apache Spark.
+
+This project must be done individually. No copying is permitted. Note: We will use a system for detecting software plagiarism, called MossLinks to an external site., which is an automatic system for determining the similarity of programs. That is, your program will be compared with the programs of the other students in class as well as with the programs submitted in previous years. This program will find similarities even if you rename variables, move code, change code structure, etc.
+
+Note that, if you use a Search Engine to find similar programs on the web, we will find these programs too. So don't do it because you will get caught and you will get an F in the course (this is cheating). Don't look for code to use for your project on the web or from other students (current or past). Don't use ChatGPT or any other AI program to generate code. Just do your project alone using the help given in this project description and from your instructor and GTA only.
+
+Platform
+As in the previous projects, you will develop your program on SDSC Expanse. Optionally, you may use your laptop or IntelliJ Idea or Eclipse to help you develop your program, but you should test your programs on Expanse before you submit them.
+
+Using your laptop to develop your project
+You may use your laptop to develop your program and then test it and run it on Expanse.
+
+To install the Spark software and the project:
+
+cd
+wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
+tar xfz spark-3.1.2-bin-hadoop3.2.tgz
+wget http://lambda.uta.edu/cse6332/project4.tgz
+tar xfz project4.tgz
+Go to project4/examples and look at the Spark example src/main/scala/JoinSpark.scala. You can compile JoinSpark.scala using:
+
+cd examples
+mvn install
+~/spark-3.1.2-bin-hadoop3.2/bin/spark-submit --class JoinSpark target/cse6332-spark-examples-0.1.jar e.txt d.txt output
+To compile and run project4 on small a dataset: (make sure your JAVA_HOME is correct first)
+
+cd project4
+mvn install
+~/spark-3.1.2-bin-hadoop3.2/bin/spark-submit --class KMeans target/cse6332-project4-0.1.jar points-small.txt centroids.txt
+The results in the log file kmeans.local.out must be equal to solution-small.txt.
+
+If you want to use the Scala and the Spark interpreter to learn Scala and Spark, use the following command: (make sure your JAVA_HOME is correct first)
+
+~/spark-3.1.2-bin-hadoop3.2/bin/spark-shell
+After you make sure that the project works correctly for small data on your laptop, copy the files to Expanse and test it on Expanse.
+
+Installing the Project on Expanse
+This step is required. If you'd like, you can develop this project completely on Expanse. If you have already developed project 4 on your laptop, copy project4.tgz from your laptop to Expanse. Otherwise, download project4 using wget http://lambda.uta.edu/cse6332/project4.tgz.
+
+Then untar project4:
+
+tar xfz project4.tgz
+chmod -R g-wrx,o-wrx project4
+Go to project4/examples and look at the Spark example JoinSpark.scala. You can compile JoinSpark.scala using:
+
+run joinSpark.build
+and you can run it in local mode using:
+
+sbatch joinSpark.local.run
+File join.local.out will contain the trace log of the Spark evaluation and output/part* will contain the output.
+
+You can compile KMeans.java on Expanse using:
+
+run kmeans.build
+and you can run it in local mode over the two small matrices using:
+
+sbatch kmeans.local.run
+The results in the log file kmeans.local.out must be equal to solution-small.txt. You should modify and run your programs in local mode until you get the correct result. After you make sure that your program runs correctly in local mode, you run it in distributed mode using:
+
+sbatch kmeans.distr.run
+The results in the log file kmeans.distr.out must be equal to solution-large.txt.
+
+Project Description
+You are asked to implement one step of the Lloyd's algorithm for K-Means clustering using Spark and Scala. The goal is to partition a set of points into k clusters of neighboring points. It starts with an initial set of k centroids. Then, it repeatedly partitions the input according to which of these centroids is closest and then finds a new centroid for each partition. That is, if you have a set of points P and a set of k centroids C, the algorithm repeatedly applies the following steps:
+
+Assignment step: partition the set P into k clusters of points Pi, one for each centroid Ci, such that a point p belongs to Pi if it is closest to the centroid Ci among all centroids.
+Update step: Calculate the new centroid Ci from the cluster Pi so that the x,y coordinates of Ci is the mean x,y of all points in Pi.
+The datasets used are random points on a plane in the squares (i*2+1,j*2+1)-(i*2+2,j*2+2), with 0≤i≤9 and 0≤j≤9 (so k=100 in k-means). The initial centroids in centroid.txt are the points (i*2+1.2,j*2+1.2). So the new centroids should be in the middle of the squares at (i*2+1.5,j*2+1.5).
+
+In this project, you are asked to implement one step of the K-means clustering algorithm using Spark and Scala. A skeleton file project4/src/main/scala/KMeans.scala is provided, as well as scripts to build and run this code on Expanse. You should modify KMeans.scala only. Your main program should take two arguments: the text file that contains the points (points-small.txt or points-large.txt) and the centroids.txt file. The resulting centroids will be written to the output. This time, the process of finding new centroids from previous centroids using KMeans must be repeated 5 times. Note: you need to broadcast the centroids to worker nodes using the Spark broadcast method (see Broadcast Variables on p58 in the class slides):
+
+     for ( i <- 1 to 5 ) {
+        /* broadcast centroids to all workers */
+
+        /* find new centroids using KMeans */
+        centroids = points.map { p => val cs = /* the broadcast centroids */
+                                      ( closest_centroid(p,cs), p )
+                               }
+                          .groupByKey()
+                          .map { /* calculate a new centroid */ }
+                          .collect()
+    }
+where closest_centroid(p,cs) returns a point c from cs that has the minimum distance(p,c), which is the Euclidean distance between p and c. The centroids must be broadcast to all workers so that the first map can retrieve the centroids as an array cs.
+
+You can compile KMeans.scala on Expanse using:
+
+run kmeans.build
+and you can run it in local mode over the small data using:
+
+sbatch kmeans.local.run
+You should modify and run your programs in local mode until you get the correct results. Your results in the log file kmeans.local.out should be equal to the results in solution-small.txt. After you make sure that your program runs correctly in local mode, you run it in distributed mode using:
+
+sbatch kmeans.distr.run
+This will work on the moderate-sized data and will print the results to the output. Your results in the log file kmeans.distr.out should be equal to the results in solution-large.txt.
+
+Optional: Use an IDE to develop your project
+If you have a prior good experience with an IDE (IntelliJ IDEA or Eclipse), you may want to develop your program using an IDE and then test it and run it on Expanse. Using an IDE is optional; you shouldn't do this if you haven't used an IDE before.
+
+On IntelliJ IDEA, go to New→Project from Existing Sources, then choose your project4 directory, select Maven, and the Finish. To compile the project, go to Run→Edit Configurations, use + to Add New Configuration, select Maven, give it a name (eg, build), use Working directory: your project4 directory, Command line: install, then Apply. To run your project in local mode, you need to add the line conf.setMaster("local[2]") in the main program before you create SparkContext (you should remove this line before you test your project on Expanse). Go to Run→Edit Configurations, use + to Add New Configuration, select Application, give it a name (eg, run), use the Main class: KMeans, Program arguments: M-matrix-small.txt N-matrix-small.txt output.
+
+On Eclipse, you first need to install m2eLinks to an external site. (Maven on Eclipse), if it's not already installed. Then, install Scala IDE on EclipseLinks to an external site.. Then go to Open File...→Import Project from File System, then choose your project4 directory. To compile your project, right click on the project name at the Package Explorer, select Run As, and then Maven install. To run your project in local mode, you need to add the line conf.setMaster("local[2]") in the main program before you create SparkContext (you should remove this line before you test your project on Expanse). Right-click on KMeans.scala→Run As→Run Configurations, select Scala Application, press the New button to create a new configuration, give it a name (eg, run), add the main class KMeans, and go to Arguments. Add the arguments: M-matrix-small.txt N-matrix-small.txt output. Now you can run it in local mode by hitting Run.
+
+Documentation
+You can learn more about Scala at:
+
+A Scala Tutorial for Java ProgrammersLinks to an external site.
+A Tour of ScalaLinks to an external site.
+Scala APILinks to an external site.
+You can learn more about Spark at:
+
+Spark Quick StartLinks to an external site.
+Spark Programming GuideLinks to an external site.
+Spark by {Examples}Links to an external site.
+RDD APILinks to an external site.
+PairRDDFunctions APILinks to an external site.
+What to Submit
+As in the previous projects, you need to tar your project4 directory on Expanse, copy project4.tgz from Expanse to your laptop, and submit it using this project page. Make sure that your project4 contains the files:
+
+projeect4/src/main/java/KMeans.java
+projeect4/kmeans.local.out
+projeect4/kmeans.distr.out

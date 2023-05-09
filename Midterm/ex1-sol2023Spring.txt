@@ -1,0 +1,66 @@
+1)
+
+class NameScore {
+  short tag;
+  String name;
+  int score;
+  NameScore ( String name ) { tag = 0; this.name = name }
+  NameScore ( int score ) { tag = 1; this.score = score }
+}
+
+map(key,line) =             // mapper for student
+  split line into 3 values: studentID, name, address
+  emit(studentID, NameScore(name))
+
+map(key,line) =             // mapper for enrollment
+  split line into 3 values: studentID, courseCode, score
+  emit(studentID, NameScore(score))
+
+reduce(studentID, values) =
+  count = 0
+  sum = 0.0
+  name = null
+  for v in values
+     if v.tag==0
+        name = v.name
+     else {
+        count++
+        sum += v.score
+     }
+  emit(name,sum/count)
+
+2)
+
+map(key,line) =             // mapper for matrix M
+  split line into 3 values: i, j, and v
+  emit(Pair(i,j),Pair(0,v))
+
+map(key,line) =             // mapper for matrix N
+  split line into 3 values: i, j, and v
+  emit(Pair(i,j),Pair(1,v))
+
+reduce(key,values) =   // key is a Pair(i,j)
+  A = all v such that Pair(0,v) in values   // can be empty or have one value
+  B = all v such that Pair(1,v) in values   // can be empty or have one value
+  if B is empty
+    emit(key,A[0])      // A should have one element only
+  else if A is empty
+    emit(key,B[0])      // B should have one element only
+  else emit(key,A[0]+B[0])      // each of A and B should have one element only
+
+3)
+
+A pair is a tag-value pair
+
+map(key,line) =
+  split line into 2 values: i,j
+  emit(i,Pair(0,j))
+  emit(j,Pair(1,i))
+
+reduce(id,values) =
+  A = all v such that Pair(0,v) in values
+  B = all v such that Pair(1,v) in values
+  for a in A
+     for b in B
+         if a == b
+            emit(id,a)

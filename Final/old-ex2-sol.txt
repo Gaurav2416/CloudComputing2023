@@ -1,0 +1,130 @@
+1)
+
+map(key,line) =             // mapper for student
+  split line into 3 values: studentID, name, address
+  emit(studentID, (0,name))
+
+map(key,line) =             // mapper for enrollment
+  split line into 3 values: studentID, courseCode, score
+  emit(studentID, (1,score))
+
+reduce(studentID, values) =
+  count = 0
+  sum = 0
+  name = null
+  for (tag,v) in values
+     if tag==0
+        name = v
+     else {
+        count++
+        sum += v
+     }
+  emit(name,sum/count)
+
+2)
+
+val S = sc.textFile("students.txt")
+          .map( line => { val a = line.split(",")
+                          (a(0).toInt,a(1)) } )      // .toInt is not needed
+
+val E = sc.textFile("enrollment.txt")
+          .map( line => { val a = line.split(",")
+                          (a(1).toInt,a(2).toInt) } )   // a(0) is not needed
+
+S.join(E)
+ .map{ case (id,(name,score)) => (name,(score,1)) }
+ .reduceByKey{ case ((s1,c1),(s2,c2)) => (s1+s2,c1+c2) }
+ .map{ case (name,(s,c)) => (name,s/c) }
+ .collect.foreach(println)
+
+Another solution:
+
+S.join(E)
+ .map{ case (id,(name,score)) => (name,score) }
+ .groupByKey()
+ .map{ case (name,scores) => scores.sum/scores.count }
+ .collect.foreach(println)
+
+.. or you may use scores.reduce(_+_) instead of scores.sum
+
+3)
+
+S = load 'students.txt' using PigStorage(',') as ( id:int, name:string );
+E = load 'enrollment.txt' using PigStorage(',') as ( course:string, id:int, score:int );
+J = join S by id, E by id;
+G = group J by name;
+F = foreach G generate group as name, AVG(E.score);
+store F into 'output' using PigStorage (',');
+
+4)
+
+val S = sc.textFile("students.txt")
+          .map( line => { val a = line.split(",")
+                          (a(0).toInt,a(1)) } )
+          .toDF()
+
+val E = sc.textFile("enrollment.txt")
+          .map( line => { val a = line.split(",")
+                          (a(1).toInt,a(2).toInt) } )
+          .toDF()
+
+S.createOrReplaceTempView("S")
+E.createOrReplaceTempView("E")
+
+spark.sql("""
+          select S._2, avg(E._2)
+          from S, E
+          where S._1 = E._1
+          group by S._2
+          """)
+
+Another solution:
+
+case class Students(id:Int,name:String)
+case class Enrollment(id:Int,score:Int)
+
+val S = sc.textFile("students.txt")
+          .map( line => { val a = line.split(",")
+                          Student(a(0).toInt,a(1)) } )
+          .toDF()
+
+val E = sc.textFile("enrollment.txt")
+          .map( line => { val a = line.split(",")
+                          Enrollment(a(1).toInt,a(2).toInt) } )
+          .toDF()
+
+S.createOrReplaceTempView("S")
+E.createOrReplaceTempView("E")
+
+spark.sql("""
+          select S.name, avg(E.score)
+          from S, E
+          where S.id = E.id
+          group by S.name
+          """)
+
+5)
+
+a)
+
+val graph = sc.textFile("graph.txt")
+              .map(line => { val a = line.split(",")
+                             (a(0).toInt,a.toList.tail) })
+              .flatMap{ case (i,s) => s.map( j => (i,j) ) }
+
+b)
+
+graph.map{ case (i,j) => (j,i) } )
+     .join( graph )                         // or   .join( graph.map{ case (j,k) => (j,k) } )
+     .map{ case (j,(i,k)) => (k,(i,j)) }
+     .join( graph )                         // or   .join( graph.map{ case (k,l) => (k,l) } )
+     .flatMap{ case (k,((i,j),l))
+                 => if (l == i)
+                       List((i,j,k))
+                    else Nil
+             }
+     .collect.foreach(println)
+
+After the first join, we get all vertices ijk with i->j->k
+After the first join, we get all vertices ijkl with i->j->k->l
+The flatMap keeps i->j->k->l with l==i

@@ -1,0 +1,51 @@
+Description
+The purpose of this project is to develop a simple analysis program for graph analysis using Spark SQL.
+
+This project must be done individually. No copying is permitted. Note: We will use a system for detecting software plagiarism, called MossLinks to an external site., which is an automatic system for determining the similarity of programs. That is, your program will be compared with the programs of the other students in class as well as with the programs submitted in previous years. This program will find similarities even if you rename variables, move code, change code structure, etc.
+
+Note that, if you use a Search Engine to find similar programs on the web, we will find these programs too. So don't do it because you will get caught and you will get an F in the course (this is cheating). Don't look for code to use for your project on the web or from other students (current or past). Don't use ChatGPT or any other AI program to generate code. Just do your project alone using the help given in this project description and from your instructor and GTA only.
+
+Platform
+As in the previous projects, you will develop your program on SDSC Expanse.
+
+Setting up your Project
+Login into Expanse and download and untar project7:
+
+wget http://lambda.uta.edu/cse6332/project7.tgz
+tar xfz project7.tgz
+chmod -R g-wrx,o-wrx project7
+You can compile Graph.scala using:
+
+run graph.build
+To run it in local mode over a small graph do:
+
+sbatch graph.local.run
+After you make sure that your program runs correctly in local mode (the output is the same as the solution in small-solution.txt), you run it in distributed mode using:
+
+sbatch graph.distr.run
+This will process the the large graph data. Your results should be the same as the results in the file large-solution.txt.
+
+Optional: Use your laptop to develop your project
+If you'd prefer, you may use your laptop to develop your program and then test it and run it on Expanse.
+
+To run your project in local mode, go to project7 and do:
+
+mvn install
+~/spark-3.1.2-bin-hadoop3.2/bin/spark-submit --class Graph target/cse6332-project7-0.1.jar small-graph.txt
+Your output should be the same as the results in small-solution.txt. You may also test your program on large-solution.txt.
+
+Project Description
+You are asked to re-implement Project #6 (simple graph data analysis) using Spark SQL. Do not use the Spark Core API (RDD methods) to process the data - but you may use RDD methods to read the data from a file. An empty src/main/scala/Graph.scala is provided as well as scripts to run this code on Expanse. You need to write two Spark SQL queries. For each graph node, the first Spark SQL query computes the number of node neighbors. Then, the second Spark SQL query groups the nodes by their number of neighbors and for each group you count how many nodes belong to this group. The second query output must be sorted by the number of neighbors.
+
+The input data are the same as in Project #6. You must print the results to the output.
+
+Documentation
+You can learn more about Spark SQL at:
+
+Spark SQL, DataFrames and Datasets GuideLinks to an external site.
+What to Submit
+Submit the zipped project7 directory, which must contain the files:
+
+project7/src/main/scala/Graph.scala
+project7/graph.local.out
+project7/graph.distr.out

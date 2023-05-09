@@ -1,0 +1,95 @@
+1)
+
+map(key,line) =
+  split line into 4 values: MovieID, UserID, Rating, Date
+  emit(MovieID,Rating)
+
+reduce(mid,ratings) =
+  count = 0
+  sum = 0.0
+  for r in ratings:
+    count += 1
+    sum += r
+  emit(mid,Pair(count,sum/count))
+
+or, another solution:
+
+map(key,line) =
+  split line into 4 values: MovieID, UserID, Rating, Date
+  emit(MovieID,Pair(1,Rating))
+
+reduce(mid,pairs) =
+  count = 0
+  sum = 0.0
+  for pair in pairs:
+    count += pair.count
+    sum += pair.sum
+  emit(mid,Pair(count,sum/count))
+
+2)
+
+a)
+
+map( coord, block ):   /* coord is Pair, block is Block */
+  for i=0 to rows-1
+      for j=0 to columns-1
+          emit( Pair( coord.i*rows+i, coord.j*columns+j ),
+                block.data[i][j] )
+
+b)
+
+map( coord, block ):   /* coord is Pair, block is Block */
+  b = empty block
+  for i=0 to rows-1
+      for j=0 to columns-1
+          b[i][j] = block.data[j][i]
+  emit( Pair( coord.j, coord.i ), b )
+
+3)
+
+map (key,line)
+  parse line into i,j,f
+  emit(i,f)
+  emit(j,-f)
+
+reduce (k,s)
+  n = 0.0
+  for all f in s:
+     n += f
+  if (n != 0.0)
+     emit(k,n)
+
+Another solution:
+
+map (key,line)
+  parse line into i,j,f
+  emit(i,(1,j,f))            (or emit(i,(1,f)) -- we don't need j)
+  emit(j,(2,i,f))            (or emit(j,(2,f)) -- we don't need i)
+
+reduce (k,s)
+  in = out = 0.0
+  for all (1,j,f) in s:
+     out += f
+  for all (2,i,f) in s:
+     in += f
+  if (in != out)
+     emit(k,in-out)
+
+Another solution (using a self-join):
+
+map (key,line)
+  parse line into i,j,f
+  emit(i,(1,j,f))            (or emit(i,(1,f)) -- we don't need j)
+
+map (key,line)
+  parse line into i,j,f
+  emit(j,(2,i,f))            (or emit(j,(2,f)) -- we don't need i)
+
+reduce (k,s)
+  in = out = 0.0
+  for all (1,j,f) in s:
+     out += f
+  for all (2,i,f) in s:
+     in += f
+  if (in != out)
+     emit(k,in-out)
